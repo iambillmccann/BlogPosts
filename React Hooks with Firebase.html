@@ -1,0 +1,166 @@
+<p>
+    If you are a React developer, and unless you have been living under a rock for the past year, 
+    you will be familiar with Context, Reducers, and Hooks. Sure, these are generally simply called 
+    "Hooks" or "custom hooks". Hooks gives the developer two advantages over the old-school method
+    of build class-based components. These are:
+</p>
+<ul>
+    <li>Abliity to build an entire application using function components, and</li>
+    <li>Elimination of the need for Redux.</li>
+</ul>
+<p>
+    Functional components make the code more concise and readible. They also provide a fairly significant 
+    performance boost over classes. As for Redux. Well. Good riddance.
+</p>
+<p>
+    Armed with hooks I decided that my next Reeact project would be written entirely with functions and 
+    hooks. And this approach worked great until I needed to wire up Firebase Authentication. I discovered
+    that the tutorials available all gave examples using class-based components. This article then, is my
+    attempt to fill that gap with my notes on using Hooks with Firebase Authentication.
+</p>
+<p>
+    Here are the things I had to build.
+</p>
+<ul>
+    <li>A "context" with a "context provider",</li>
+    <li>A "reducer" (yeah, that's a dumb name),</li>
+    <li>A custom hook that uses an Effect hook,</li>
+    <li>Helper functions to interact with Firebase, and</li>
+    <li>All the JSX to make it work.</li>
+</ul>
+<p>
+    Let's start by writing a Reducer. That might seem a bit backward as I typically begin with my Context.
+    But since the Reducer is referenced by the Context, I'll start with the Reducer. The reducer is used
+    to make changes to the state of the properties managed by the Conext. If all this sounds like jargon
+    (which it is), then I suggest reading up on React Hooks; especially useContext, useReducer, and
+    useEffect. I'd love to explain all that here, but well, this article will be very long as it is.
+</p>
+<p>
+    The Reducer and the Context will be supporting Firebase Authentication. I should mention here that
+    I am using the Authentication SDK and not the drop-in UI. I should also mention that I am only 
+    describing email based authentication. The properties of a "user" in
+    Firebase are:
+</p>
+<ul>
+    <li><b>Name</b>, which is the "display name" of the user. The display name is typically the user's full name.</li>
+    <li><b>Email</b>, or the email address the user is treating as her id.</li>
+    <li><b>PhotoURL</b>, a URL to an image the user has unloaded for their avatar.</li>
+    <li><b>EmailVerified</b>, a boolean value that indicates the user responded to a verification message.</li>
+    <li><b>Uid</b>, which is a global unique identifier assigned by Firebase to the user.</li>
+</ul>
+<p>
+    Reducers generally contain logic for adding, removing, or manipulating the Context's data. In this case
+    though, the user data is managed by Firebase via its' SDK. All our reducer need to do it assure that the 
+    context is current. I created a file named <i>SessionReducer.js</i> and included the code below.
+</p>
+<pre>
+    export const SessionReducer = (state, action) => {
+        switch (action.type) {
+          case "UPDATE":
+            return {
+              name: action.session.name,
+              email: action.session.email,
+              photourl: action.session.photourl,
+              emailVerified: action.session.emailVerified,
+              uid: action.session.uid
+            };
+          default:
+            return state;
+        }
+      };
+</pre>
+<p>
+    The <i>action.type</i> property is part of the Reducer specification. So the Reducer is passed the state
+    and an action object and returns the new value of the state. In this case, we will only take one action
+    that I have set to "UPDATE". The value <i>UPDATE</i>, by-the-way, is a discrensionary name set by the 
+    developer. Also note that I do not need any import statements here.
+</p>
+<p>
+    There are more parts to the Context. I'll show the code and then describe it. I created a file named <i>SessionContext.js</i> and included the code 
+    below.
+</p>
+<pre>
+    // React imports
+    import React, { createContext, useReducer, useContext, useEffect } from "react";
+    
+    // Firebase imports
+    import firebase from "../firebase";
+    
+    // My imports
+    import { SessionReducer } from "../reducers/SessionReducer";
+    
+    // initial state values
+    const initialState = {
+      name: null,
+      email: null,
+      photourl: null,
+      emailVerified: false,
+      uid: null
+    };
+    
+    // create the context
+    export const SessionContext = createContext();
+    
+    // create the context provider
+    const SessionContextProvider = props => {
+      const [session, dispatch] = useReducer(SessionReducer, initialState);
+      return (
+        <SessionContext.Provider value={{ session, dispatch }}>
+          {props.children}
+        </SessionContext.Provider>
+      );
+    };
+    
+    // create the custom hook
+    export const useSession = () => {
+      const contextState = useContext(SessionContext);
+      const { dispatch } = contextState;
+      useEffect(() => {
+        firebase.auth().onAuthStateChanged(user => {
+          var currentUser = {};
+          if (user) {
+            currentUser = {
+              name: user.displayName,
+              email: user.email,
+              photourl: user.photoURL,
+              emailVerified: user.emailVerified,
+              uid: user.uid
+            };
+          } else {
+            currentUser = initialState;
+          }
+          dispatch({
+            type: "UPDATE",
+            session: currentUser
+          });
+        });
+      }, [dispatch]);
+      return contextState;
+    };
+    
+    export default SessionContextProvider;    
+</pre>
+<p>
+    Notice near the top of the code I have included an import of the Reducer described earlier. I have not 
+    described the struction of my appliation but suffice to say that my Contexts and Reducers each 
+    reside in folders made for that purpose. You can organize your source files any way you like.
+</p>
+<p>
+    Following the imports, I create and export the SessionContext using React's API for that purpose. It's 
+    one line of code that requires no parameters. Next I have a few lines of code to create the "Context 
+    Provider". This is a small amount of code that includes JSX that ties the context to components in 
+    the application. React includes to methods for this: <i>Provider</i> and <i>Consumer</i>, but since I
+    am using functional components exclusively I must use the Provider method.
+</p>
+<p>
+    The Provider binds the Reducer to the Context. In this code I use the <i>useReducer</i> function to 
+    deconstruct its' return value into the "session" and the "dispatch". The session is the current 
+    state and the dispatch is the function I supplied when I wrote the Reducer. These values are passed as 
+    props (via HTML attributes) to the provider context. The <i>{props.children}</i> value assures that this 
+    context provider will be available to all children components to the component where it is used. 
+    That should be clear later. I should also mention that the provider context is just another component. 
+    In my case, the context provider is my default exported function.
+</p>
+<p>
+    The real meat and potatoes of
+</p>
