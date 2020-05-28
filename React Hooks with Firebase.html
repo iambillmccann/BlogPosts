@@ -28,6 +28,7 @@
     <li>Helper functions to interact with Firebase, and</li>
     <li>All the JSX to make it work.</li>
 </ul>
+<h2>The Reducer</h2>
 <p>
     Let's start by writing a Reducer. That might seem a bit backward as I typically begin with my Context.
     But since the Reducer is referenced by the Context, I'll start with the Reducer. The reducer is used
@@ -75,6 +76,7 @@
     that I have set to "UPDATE". The value <i>UPDATE</i>, by-the-way, is a discrensionary name set by the 
     developer. Also note that I do not need any import statements here.
 </p>
+<h2>The Context</h2>
 <p>
     There are more parts to the Context. I'll show the code and then describe it. I created a file named <i>SessionContext.js</i> and included the code 
     below.
@@ -161,6 +163,237 @@
     That should be clear later. I should also mention that the provider context is just another component. 
     In my case, the context provider is my default exported function.
 </p>
+<h2>The Custom Hook</h2>
 <p>
-    The real meat and potatoes of
+    The last function creates the custom hook. By convention the names of hooks start with "use" in lower
+    case; i.e. useContext, useReducer, or in my case useSession. The custom hook first retrieves data from
+    this context, which is the state and the dispatch function, and stores it in <i>contextState</i>. The 
+    dispatch function is deconstructed out of the contextState. For my purpose here, I will not need the 
+    actual values of the state.
+</p>
+<p>
+    The work of this custom hook is accomplished within a useEffect function. If you’re familiar with React 
+    class lifecycle methods, you can think of useEffect Hook as <i>componentDidMount</i>, <i>componentDidUpdate</i>
+    , and <i>componentWillUnmount</i> combined. In this case, whenever a component that uses our hook is 
+    rendered, a call is made to the Firebase <i>onAuthStateChanged</i> method. That method is passed a function 
+    that checks the state of the current Firebase user. If the user exists then the Firebase used is passed 
+    to the dispatch function, otherwise the initial state of the user (which is null) is passed to dispatch.
+</p>
+<h2>Wiring it up</h2>
+<p>
+    The rest is simply writing the custom hook into the app. In this case I wanted to make the hook available 
+    to the entire application. To accopmlish this I added my context provider to the <i>app.js</i> main code 
+    file.
+</p>
+<pre>
+    // React imports
+    import React from "react";
+    import { BrowserRouter, Switch, Route } from "react-router-dom";
+    
+    // Material UI imports
+    import { MuiThemeProvider, useTheme } from "@material-ui/core/styles";
+    import CssBaseline from "@material-ui/core/CssBaseline";
+    import Box from "@material-ui/core/Box";
+    import Container from "@material-ui/core/Container";
+    
+    // My imports
+    import Dashboard from "./components/dashboard/Dashboard";
+    import AppHeader from "./components/layout/AppHeader";
+    import HomeDetail from "./components/houses/HomeDetail";
+    import SignIn from "./components/auth/SignIn";
+    import SignUp from "./components/auth/SignUp";
+    import HouseContextProvider from "./contexts/HouseContext";
+    import SessionContextProvider from "./contexts/SessionContext";
+    import LaunchPage from "./components/dashboard/LaunchPage";
+    
+    const App = () => {
+      const theme = useTheme();
+    
+      return (
+        &lt;BrowserRouter&gt;
+          &lt;SessionContextProvider&gt;
+            &lt;MuiThemeProvider theme={theme}&gt;
+              &lt;HouseContextProvider&gt;
+                &lt;CssBaseline /&gt;
+                &lt;AppHeader /&gt;
+                &lt;Container maxWidth="xl"&gt;
+                  &lt;Box m={3}&gt;
+                    &lt;Switch&gt;
+                      &lt;Route path="/" exact component={LaunchPage} /&gt;
+                      &lt;Route path="/dashboard" component={Dashboard} /&gt;
+                      &lt;Route path="/homes/:id" component={HomeDetail} /&gt;
+                      &lt;Route path="/signin" component={SignIn} /&gt;
+                      &lt;Route path="/signup" component={SignUp} /&gt;
+                    &lt;/Switch&gt;
+                  &lt;/Box&gt;
+                &lt;/Container&gt;
+              &lt;/HouseContextProvider&gt;
+            &lt;/MuiThemeProvider&gt;
+          &lt;/SessionContextProvider&gt;
+        &lt;/BrowserRouter&gt;
+      );
+    };
+    
+    export default App;
+</pre>
+<p>
+    In this file there are just a couple of lines needed. First is the import of the SessionContextProvider. 
+    And the others are the JSX SessionContextProvider tags.
+</p>
+<p>
+    To signup a new user bind the function below to your form submission handler.
+</p>
+<pre>
+...
+import { signup } from "../../services/firebaseAuth";
+...
+// form actions
+const handleSubmit = e => {
+  e.preventDefault();
+  enroll();
+};
+
+// firebase signup function
+const enroll = () => {
+  const results = validate(
+    {
+      email: email,
+      password: password,
+      firstName: firstName,
+      lastName: lastName,
+      confirmedPwd: confirmedPwd
+    },
+    {
+      email: constraints.email,
+      password: constraints.password,
+      firstName: constraints.firstName,
+      lastName: constraints.lastName,
+      confirmedPwd: constraints.confirmedPwd
+    }
+  );
+
+  if (results) {
+    setErrors(results);
+  } else {
+    setErrors(null);
+    signup(email, password);
+  }
+};
+</pre>
+<p>
+    A couple of points about the code above. First, the <i>validate</i> function it its' <i>constraints</i> 
+    are out of the scope of this article. If anyone reads this, and someone asks about <i>validate</i> then 
+    I will consider writing another post to describe that function. And second, there is a helper function 
+    <i>signup</i> that I show a bit later.
+</p>
+<p>
+    Signing in is similar.
+</p>
+<pre>
+...
+import { SessionContext, useSession } from "../../contexts/SessionContext";
+import { signin } from "../../services/firebaseAuth";
+    
+const SignIn = () => {
+const [email, setEmail] = useState("");
+const [password, setPassword] = useState("");
+const [errors, setErrors] = useState();
+const { session } = useSession(SessionContext);
+const handleSubmit = e => {
+  e.preventDefault();
+  authenticate();
+};
+
+// firebase signin function
+const authenticate = () => {
+const results = validate(
+    {
+      email: email,
+      password: password
+    },
+    {
+      email: constraints.email,
+      password: constraints.password
+    }
+  );
+ 
+  if (results) {
+    setErrors(results);
+  } else {
+    setErrors(null);
+    signin(email, password);
+  }
+};
+...
+</pre>
+<p>
+    Again, the <i>signin</i> function is shown later. And lastly I sign out with a link button on 
+    my AppBar that executes the <i>signout</i> fuction (and yes, the function must be imported).
+</p>
+<pre>
+    <Button color="inherit" component={Link} to="/" onClick={signout}>
+        Sign Out
+    </Button>
+</pre>
+<p>
+    The final piece of the puzzle are the supporting functions that call out to Firebase. These are the 
+    <i>signup</i>, <i>signin</i>, and <i>signout</i> functions mentioned above. I organized the functions 
+    into a single source code file. For purposes of this paper, these functions were copied directly 
+    from the Firebase documentation website and do not incude any of my application specific code. I 
+    created the file <i>firebaseAuth.js</i> for this. The code is below.
+</p>
+<pre>
+    // Firebase imports
+    import firebase from "../firebase";
+    
+    export const signup = (email, password) => {
+      firebase
+        .auth()
+        .createUserWithEmailAndPassword(email, password)
+        .catch(error => {
+          // Handle Errors here.
+          alert("Error during sign up " + error.message); // delete this!
+          var errorCode = error.code;
+          var errorMessage = error.message;
+          if (errorCode === "auth/weak-password") {
+            alert("The password is too weak.");
+          } else {
+            alert(errorMessage);
+          }
+          console.log(error);
+        });
+    };
+    
+    export const signin = (email, password) => {
+      firebase
+        .auth()
+        .signInWithEmailAndPassword(email, password)
+        .catch(function(error) {
+          // Handle Errors here.
+          var errorCode = error.code;
+          var errorMessage = error.message;
+          if (errorCode === "auth/wrong-password") {
+            alert("Wrong password.");
+          } else {
+            alert(errorMessage);
+          }
+          console.log(error);
+        });
+    };
+    
+    export const signout = () => {
+      firebase
+        .auth()
+        .signOut()
+        .then(function() {
+          // Sign-out successful.
+        })
+        .catch(function(error) {
+          console.log(error);
+        });
+    };
+</pre>
+<p>
+    So the next person who need to implement Firebase Authentication with React Hooks now has 
+    some reference material to start with. Questions and comments are welcome.
 </p>
