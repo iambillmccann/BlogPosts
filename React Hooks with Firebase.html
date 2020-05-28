@@ -1,21 +1,21 @@
 <p>
     If you are a React developer, and unless you have been living under a rock for the past year, 
-    you will be familiar with Context, Reducers, and Hooks. Sure, these are generally simply called 
-    "Hooks" or "custom hooks". Hooks gives the developer two advantages over the old-school method
-    of build class-based components. These are:
+    you will be familiar with Context, Reducers, and Hooks. Sure, these are usually just called 
+    "Hooks" or "custom hooks". Hooks give the developer two advantages over the old-school method
+    of class-based components. These are:
 </p>
 <ul>
-    <li>Abliity to build an entire application using function components, and</li>
+    <li>Ability to build an entire application using function components, and</li>
     <li>Elimination of the need for Redux.</li>
 </ul>
 <p>
-    Functional components make the code more concise and readible. They also provide a fairly significant 
+    Functional components make the code more concise and readable. They also provide a fairly significant 
     performance boost over classes. As for Redux. Well. Good riddance.
 </p>
 <p>
-    Armed with hooks I decided that my next Reeact project would be written entirely with functions and 
+    Armed with hooks I decided that my next React project would be written entirely with functions and 
     hooks. And this approach worked great until I needed to wire up Firebase Authentication. I discovered
-    that the tutorials available all gave examples using class-based components. This article then, is my
+    that the tutorials available provided examples using class-based components. This article then, is my
     attempt to fill that gap with my notes on using Hooks with Firebase Authentication.
 </p>
 <p>
@@ -23,7 +23,7 @@
 </p>
 <ul>
     <li>A "context" with a "context provider",</li>
-    <li>A "reducer" (yeah, that's a dumb name),</li>
+    <li>A "reducer",</li>
     <li>A custom hook that uses an Effect hook,</li>
     <li>Helper functions to interact with Firebase, and</li>
     <li>All the JSX to make it work.</li>
@@ -32,7 +32,7 @@
 <p>
     Let's start by writing a Reducer. That might seem a bit backward as I typically begin with my Context.
     But since the Reducer is referenced by the Context, I'll start with the Reducer. The reducer is used
-    to make changes to the state of the properties managed by the Conext. If all this sounds like jargon
+    to make changes to the state of the properties managed by the Context. If all this sounds like jargon
     (which it is), then I suggest reading up on React Hooks; especially useContext, useReducer, and
     useEffect. I'd love to explain all that here, but well, this article will be very long as it is.
 </p>
@@ -43,15 +43,15 @@
     Firebase are:
 </p>
 <ul>
-    <li><b>Name</b>, which is the "display name" of the user. The display name is typically the user's full name.</li>
-    <li><b>Email</b>, or the email address the user is treating as her id.</li>
-    <li><b>PhotoURL</b>, a URL to an image the user has unloaded for their avatar.</li>
+    <li><b>Name</b>, which is the "display name" of the user. The display name is usually the user's full name.</li>
+    <li><b>Email</b>, an email address the user is treating as her id.</li>
+    <li><b>PhotoURL</b>, a URL to an image the user has uploaded for their avatar.</li>
     <li><b>EmailVerified</b>, a boolean value that indicates the user responded to a verification message.</li>
     <li><b>Uid</b>, which is a global unique identifier assigned by Firebase to the user.</li>
 </ul>
 <p>
-    Reducers generally contain logic for adding, removing, or manipulating the Context's data. In this case
-    though, the user data is managed by Firebase via its' SDK. All our reducer need to do it assure that the 
+    Reducers contain logic for adding, removing, or manipulating the Context's data. In this case
+    though, the user data is managed by Firebase via its' SDK. All our reducer needs to do is assure that the 
     context is current. I created a file named <i>SessionReducer.js</i> and included the code below.
 </p>
 <pre>
@@ -73,12 +73,12 @@
 <p>
     The <i>action.type</i> property is part of the Reducer specification. So the Reducer is passed the state
     and an action object and returns the new value of the state. In this case, we will only take one action
-    that I have set to "UPDATE". The value <i>UPDATE</i>, by-the-way, is a discrensionary name set by the 
+    that I have set to "UPDATE". The value <i>UPDATE</i>, by-the-way, is a discresionary name set by the 
     developer. Also note that I do not need any import statements here.
 </p>
 <h2>The Context</h2>
 <p>
-    There are more parts to the Context. I'll show the code and then describe it. I created a file named <i>SessionContext.js</i> and included the code 
+    The Context is a bit bigger and contains a couple of functions. I'll show the code and then describe it. I created a file named <i>SessionContext.js</i> and included the code 
     below.
 </p>
 <pre>
@@ -143,15 +143,15 @@
     export default SessionContextProvider;    
 </pre>
 <p>
-    Notice near the top of the code I have included an import of the Reducer described earlier. I have not 
-    described the struction of my appliation but suffice to say that my Contexts and Reducers each 
+    Notice near the top of the code I have included an import of the Reducer shown earlier. I have not 
+    described the structure of my application but suffice to say that my Contexts and Reducers each 
     reside in folders made for that purpose. You can organize your source files any way you like.
 </p>
 <p>
     Following the imports, I create and export the SessionContext using React's API for that purpose. It's 
     one line of code that requires no parameters. Next I have a few lines of code to create the "Context 
     Provider". This is a small amount of code that includes JSX that ties the context to components in 
-    the application. React includes to methods for this: <i>Provider</i> and <i>Consumer</i>, but since I
+    the application. React has two methods for this: <i>Provider</i> and <i>Consumer</i>, but since I
     am using functional components exclusively I must use the Provider method.
 </p>
 <p>
@@ -159,9 +159,9 @@
     deconstruct its' return value into the "session" and the "dispatch". The session is the current 
     state and the dispatch is the function I supplied when I wrote the Reducer. These values are passed as 
     props (via HTML attributes) to the provider context. The <i>{props.children}</i> value assures that this 
-    context provider will be available to all children components to the component where it is used. 
-    That should be clear later. I should also mention that the provider context is just another component. 
-    In my case, the context provider is my default exported function.
+    context provider will be available to all children components to the component where it is used. I should 
+    also mention that the provider context is just another component. In my case, the context provider is 
+    my default exported function.
 </p>
 <h2>The Custom Hook</h2>
 <p>
@@ -182,7 +182,7 @@
 <h2>Wiring it up</h2>
 <p>
     The rest is simply writing the custom hook into the app. In this case I wanted to make the hook available 
-    to the entire application. To accopmlish this I added my context provider to the <i>app.js</i> main code 
+    to the entire application. To accomplish this I added my context provider to the <i>app.js</i> main code 
     file.
 </p>
 <pre>
@@ -237,7 +237,7 @@
     export default App;
 </pre>
 <p>
-    In this file there are just a couple of lines needed. First is the import of the SessionContextProvider. 
+    In this file there are just a couple of lines to point out. First is the import of the SessionContextProvider. 
     And the others are the JSX SessionContextProvider tags.
 </p>
 <p>
@@ -331,12 +331,14 @@ const results = validate(
     my AppBar that executes the <i>signout</i> fuction (and yes, the function must be imported).
 </p>
 <pre>
-    <Button color="inherit" component={Link} to="/" onClick={signout}>
+    ...
+    &lt;Button color="inherit" component={Link} to="/" onClick={signout}&gt;
         Sign Out
-    </Button>
+    &lt;/Button&gt;
+    ...
 </pre>
 <p>
-    The final piece of the puzzle are the supporting functions that call out to Firebase. These are the 
+    The final pieces of the puzzle are the supporting functions that call out to Firebase. These are the 
     <i>signup</i>, <i>signin</i>, and <i>signout</i> functions mentioned above. I organized the functions 
     into a single source code file. For purposes of this paper, these functions were copied directly 
     from the Firebase documentation website and do not incude any of my application specific code. I 
@@ -393,7 +395,8 @@ const results = validate(
         });
     };
 </pre>
+<h2>Firebase</h2>
 <p>
-    So the next person who need to implement Firebase Authentication with React Hooks now has 
+    So the next person who needs to implement Firebase Authentication with React Hooks now has 
     some reference material to start with. Questions and comments are welcome.
 </p>
