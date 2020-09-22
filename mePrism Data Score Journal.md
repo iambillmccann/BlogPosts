@@ -87,5 +87,29 @@ There are a number of folders out on Google Drive.
 
 ##### CapTech Sprint Grooming
 
-Attempting to groom and estimate sprint number three.
+Attempting to groom and estimate sprint number three. 
 
+Part of this conversation was a discussion about the ML Pipeline and what it will take to "re-platform" Jinyi's projects into Lambda functions. This is a useless activity. There is no connection between the Jinyi's notebooks and the current code running in Analyze.
+
+#### Setting up for the data transfer
+
+I have decided to move the data using Python code as described above. I started by creating a local branch called mccann-data-transfer. In the root folder of the branch I created a folder called data_transfer. This will hold the script for the data copy. 
+
+My first task is to write a script that can navigate the Google Drive folder structure. To do this I am using guidance found at the following link ... https://developers.google.com/drive/api/v3/quickstart/python.
+
+The first part of this is enabling the Google Drive API. From a browser that was logged into the research@datavax.io account, I clicked the *Enable the Drive API* button. This popped up a modal dialog giving me a choice of target platform; I chose *Desktop* as this will run as a console app. Lastly I clicked *DOWNLOAD CLIENT CONFIGURATION* from the "You're All Set" panel.
+
+| Item          | Value                                                        |
+| ------------- | ------------------------------------------------------------ |
+| Client ID     | 351233066343-j7jijnvdvfe31j3imb7e1frggnbsmr4v.apps.googleusercontent.com |
+| Client Secret | Q6UvWNPypmAx7DGi_9eoyroA                                     |
+
+These credentials can be managed at this link ... https://console.developers.google.com/?authuser=0&project=data-transfer-1600811675745
+
+Next I need to install the Google Client Library with the following command ...
+
+```bash
+pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
+```
+
+The Google quick-start page includes sample code. I created `quickstart.py`  and copied the sample code into that source file.
