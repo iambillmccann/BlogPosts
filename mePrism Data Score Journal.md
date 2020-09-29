@@ -112,4 +112,24 @@ Next I need to install the Google Client Library with the following command ...
 pip install --upgrade google-api-python-client google-auth-httplib2 google-auth-oauthlib
 ```
 
-The Google quick-start page includes sample code. I created `quickstart.py`  and copied the sample code into that source file.
+The Google quick-start page includes sample code. I created `quickstart.py`  and copied the sample code into that source file. And it gets run with the following command ...
+
+```bash
+python quickstart.py
+```
+
+Google has the additional link ... https://developers.google.com/api-client-library/python/auth/web-app
+
+This script works. Now I need to figure out how to traverse Drive's folders. Start by writing a script that returns the id of the *Survey* folder. Once I can return the Survey folder, I need to find its' child folders. The function returns a list of immediate children. The files needed are  located in the children's children folders. I could use recursion, but knowing the actual structure, I think I will navigate the folders in a hard coded hierarchy.
+
+The resulting list will be a tuple containing the parent folder name, the child folder name, the file name, and the file id.
+
+I have traversed through the folders in the Survey directory, and only find 760 files. I do not believe this is the data that I am looking for. There are also five .zip archives in a folder named *This one*. This is the data that I need to move to S3.
+
+I ran into a roadblock. I cannot download off Google Drive. I am getting the follow message...
+
+```xml
+<HttpError 403 when requesting https://www.googleapis.com/drive/v3/files/1tjT86K7vb7FTf6b6Q2iZhizu0tuMOAP7?alt=media returned "The user has not granted the app 351233066343 read access to the file 1tjT86K7vb7FTf6b6Q2iZhizu0tuMOAP7.">
+```
+
+And I have been grinding through the Google documentation on this error. I need to use a *restricted* scope. And somehow I need to authorize that scope. I have tried making the app for internal users. And I have tried approving the scope on the *OAUTH consent screen*. Neither of those worked. I am going to start download these manually.
